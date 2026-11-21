@@ -1,4 +1,4 @@
-# C盘清理 · 免费开源版
+# C盘清理
 
 > 基于 [mzcleaner/mzcleaner](https://github.com/mzcleaner/mzcleaner) 的 MIT 开源源码构建的免费版本。
 
@@ -56,3 +56,7 @@ Windows 用户可直接双击 `run.bat`（会自动创建虚拟环境并安装�
 - 用户目录迁移、软件搬家（高级功能，操作前请自行确认风险）
 
 > 提示：清理操作不可撤销。程序遵循"宁可少删、不误删"原则，但涉及系统目录和迁移类操作前仍建议先备份重要数据。
+
+## 关键词
+
+Windows C盘清理、磁盘清理、磁盘空间分析、缓存清理、临时文件清理、系统垃圾清理、大文件查找、重复文件查找、相似文件查找、目录大小分析、软件占用查询、微信缓存清理、QQ缓存清理、浏览器缓存清理、绿色免安装、免费开源、MIT 许可证、Disk Cleaner、Storage Analyzer、TreeSize 替代、CCleaner 替代、BleachBit 替代。

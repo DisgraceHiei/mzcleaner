@@ -15,7 +15,7 @@ def main(page: ft.Page):
     """应用主入口"""
 
     # 窗口配置
-    page.title = "C盘清理 · 免费开源版"
+    page.title = "C盘清理"
     page.window.width = 1280
     page.window.height = 720
     page.window.min_width = 960

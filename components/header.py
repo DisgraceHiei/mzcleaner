@@ -11,7 +11,7 @@ class Header(ft.Container):
         self.page = page
 
         title = ft.Text(
-            value="C盘清理 · 免费开源版",
+            value="C盘清理",
             size=16,
             color=COLORS["text"],
             weight=ft.FontWeight.W_600,
