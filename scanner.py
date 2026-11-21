@@ -106,6 +106,11 @@ SCAN_TYPES = {
         title="临时文件扫描",
         description="按后缀扫描散落的临时文件（.tmp/.bak/.dmp等），排除游戏与依赖缓存"
     ),
+    "space_usage": ScanTask(
+        scan_type="space_usage",
+        title="空间占用分析",
+        description="按软件类别统计磁盘占用，树状图直观展示（只读，不可清理）"
+    ),
 }
 
 
@@ -489,6 +494,89 @@ class DiskScanner:
         self._total_size = sum(r.size for r in results)
         self._report_progress("临时文件扫描完成", len(results), len(results))
         return results
+
+    def scan_space_usage(self, root: str = None, depth: int = 2) -> list:
+        """只读统计磁盘占用，返回树状节点列表（不删除任何文件）。
+
+        每个节点: {"name", "path", "size", "category", "color", "children"}
+        children 为该目录下最大的若干子目录（用于下钻）。
+        """
+        try:
+            from space_rules import SPACE_RULES, expand_template
+        except ImportError:
+            return []
+
+        def dir_size_limited(path: str, max_depth: int = 3) -> int:
+            """限制深度的目录大小估算，避免全盘递归卡住 GUI。"""
+            total = 0
+            stack = [(path, 0)]
+            while stack:
+                cur, depth = stack.pop()
+                if self._cancelled:
+                    break
+                try:
+                    for entry in os.scandir(cur):
+                        try:
+                            if entry.is_file(follow_symlinks=False):
+                                total += entry.stat().st_size
+                            elif entry.is_dir(follow_symlinks=False) and depth < max_depth:
+                                stack.append((entry.path, depth + 1))
+                        except (OSError, PermissionError):
+                            continue
+                except (OSError, PermissionError):
+                    pass
+            return total
+
+        def make_children(path: str, max_n: int = 12) -> list:
+            """只列直接子目录，大小用限制深度估算"""
+            items = []
+            try:
+                for entry in os.scandir(path):
+                    try:
+                        if entry.is_dir(follow_symlinks=False):
+                            sz = dir_size_limited(entry.path, max_depth=2)
+                            if sz > 0:
+                                items.append({
+                                    "name": entry.name, "path": entry.path,
+                                    "size": sz, "category": "目录", "color": None,
+                                    "children": None,
+                                })
+                    except (OSError, PermissionError):
+                        continue
+            except (OSError, PermissionError):
+                pass
+            items.sort(key=lambda x: -x["size"])
+            return items[:max_n]
+
+        if root:
+            # 下钻指定目录
+            if not os.path.isdir(root):
+                return []
+            sz = dir_size_limited(root, max_depth=4)
+            return [{
+                "name": os.path.basename(root) or root, "path": root,
+                "size": sz, "category": "目录", "color": None,
+                "children": make_children(root),
+            }]
+
+        # 顶层：按规则统计（限制深度估算）
+        nodes = []
+        for name, category, tpl, color in SPACE_RULES:
+            if self._cancelled:
+                break
+            path = expand_template(tpl)
+            if not os.path.isdir(path):
+                continue
+            sz = dir_size_limited(path, max_depth=3)
+            if sz <= 0:
+                continue
+            nodes.append({
+                "name": name, "path": path, "size": sz,
+                "category": category, "color": color,
+                "children": make_children(path) if depth > 0 else None,
+            })
+        nodes.sort(key=lambda x: -x["size"])
+        return nodes
 
     # ── 微信清理 ──────────────────────────────────────────
 

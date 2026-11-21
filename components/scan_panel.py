@@ -8,6 +8,7 @@ import flet as ft
 from theme import COLORS
 from scanner import DiskScanner, SCAN_TYPES, ScanResult, ScanTask
 from cleaner import FileCleaner, empty_recycle_bin
+from components.space_view import SpaceView
 
 
 # 扫描类型 → 菜单索引的映射
@@ -15,7 +16,7 @@ SCAN_TYPE_KEYS = [
     "basic_clean", "system_clean", "wechat_clean", "qq_clean",
     "user_dir_migrate", "software_usage", "software_move",
     "large_files", "duplicate_files", "similar_files", "dir_size_view",
-    "deep_clean", "temp_files",
+    "deep_clean", "temp_files", "space_usage",
 ]
 
 # 走「清空目录内容」清理方式的扫描类型
@@ -159,9 +160,10 @@ class ScanPanel(ft.Container):
         )
 
         # ── 结果区域 ──
+        self._space_view = SpaceView(page)
         self._result_area = ft.Container(
             content=ft.Stack(
-                controls=[self._empty_placeholder, self._result_list],
+                controls=[self._empty_placeholder, self._result_list, self._space_view],
                 expand=True,
             ),
             expand=True,
@@ -246,6 +248,12 @@ class ScanPanel(ft.Container):
             self._title.value = self._scan_task.title
             self._desc_text.value = self._scan_task.description
             self._reset_scan_state()
+            # 空间分析是只读视图：隐藏清理与选择按钮
+            is_space = self._scan_type_key == "space_usage"
+            self._btn_clean.visible = not is_space
+            self._btn_select_all.visible = False
+            self._btn_deselect_all.visible = False
+            self._space_view.visible = False
             self.update()
 
     def _reset_scan_state(self):
@@ -318,6 +326,7 @@ class ScanPanel(ft.Container):
         self._result_title.visible = False
         self._result_list.visible = False
         self._empty_placeholder.visible = True
+        self._space_view.visible = False
         self._btn_select_all.visible = False
         self._btn_deselect_all.visible = False
         self._stats_row.visible = False
@@ -359,6 +368,8 @@ class ScanPanel(ft.Container):
                 self._results = self._scanner.scan_deep_clean()
             elif scan_type == "temp_files":
                 self._results = self._scanner.scan_temp_files()
+            elif scan_type == "space_usage":
+                self._scanner._space_nodes = self._scanner.scan_space_usage()
         except Exception as ex:
             self._results = []
             self._status_text.value = f"扫描出错: {ex}"
@@ -376,6 +387,27 @@ class ScanPanel(ft.Container):
         self._is_scanning = False
         self._progress_ring.visible = False
         self._progress_bar.visible = False
+
+        # 空间分析：显示树状图，不走清理流程
+        if self._scan_type_key == "space_usage":
+            nodes = getattr(self._scanner, "_space_nodes", []) if self._scanner else []
+            total = sum(n["size"] for n in nodes)
+            self._btn_scan.content.controls[0].name = ft.Icons.SEARCH
+            self._btn_scan.content.controls[1].value = "重新扫描"
+            self._btn_scan.disabled = False
+            self._btn_scan.style = self._btn_style_active()
+            self._status_text.value = f"分析完成，共 {len(nodes)} 类，估算占用 {self._format_size(total)}"
+            self._status_text.color = COLORS["primary"]
+            self._stats_row.controls.clear()
+            self._stats_row.visible = False
+            self._result_title.visible = False
+            self._result_list.visible = False
+            self._empty_placeholder.visible = False
+            self._space_view.visible = bool(nodes)
+            if nodes:
+                self._space_view.set_nodes(nodes)
+            self.update()
+            return
 
         total_size = sum(r.size for r in self._results)
 

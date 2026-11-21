@@ -23,13 +23,14 @@ class Sidebar(ft.Container):
         {"icon": ft.Icons.PIE_CHART_OUTLINE, "text": "目录大小查看"},
         {"icon": ft.Icons.AUTO_AWESOME_OUTLINED, "text": "深度清理"},
         {"icon": ft.Icons.DESCRIPTION_OUTLINED, "text": "临时文件扫描"},
+        {"icon": ft.Icons.GRID_VIEW_OUTLINED, "text": "空间占用分析"},
     ]
 
     # 分组：(标题, 起始索引, 结束索引) - 与上面顺序对应
     GROUPS = [
         ("快速清理", 0, 4),
         ("空间分析", 4, 11),
-        ("深度工具", 11, 13),
+        ("深度工具", 11, 14),
     ]
 
     def __init__(self, on_menu_change=None):
