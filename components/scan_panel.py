@@ -15,7 +15,7 @@ SCAN_TYPE_KEYS = [
     "basic_clean", "system_clean", "wechat_clean", "qq_clean",
     "user_dir_migrate", "software_usage", "software_move",
     "large_files", "duplicate_files", "similar_files", "dir_size_view",
-    "deep_clean",
+    "deep_clean", "temp_files",
 ]
 
 # 走「清空目录内容」清理方式的扫描类型
@@ -373,6 +373,8 @@ class ScanPanel(ft.Container):
                 self._results = self._scanner.scan_dir_sizes()
             elif scan_type == "deep_clean":
                 self._results = self._scanner.scan_deep_clean()
+            elif scan_type == "temp_files":
+                self._results = self._scanner.scan_temp_files()
         except Exception as ex:
             self._results = []
             self._status_text.value = f"扫描出错: {ex}"
@@ -485,10 +487,11 @@ class ScanPanel(ft.Container):
         )
 
         path_text = ft.Text(
-            value=result.path[:80] + ("..." if len(result.path) > 80 else ""),
+            value=(result.path or "按临时文件后缀批量清理").__str__()[:80] +
+                   ("..." if len(str(result.path or "按临时文件后缀批量清理")) > 80 else ""),
             size=11,
             color=COLORS["secondary"],
-            tooltip=result.path if len(result.path) > 80 else None,
+            tooltip=result.path or None,
         )
 
         size_text = ft.Text(
@@ -612,19 +615,33 @@ class ScanPanel(ft.Container):
         self._progress_ring.visible = True
         self.update()
 
-        # 收集要清理的路径
-        paths = [self._results[i].path for i in indices if i < len(self._results)]
-
-        # 执行清理
+        # 按扫描类型分派清理
         cleaner = FileCleaner()
         deleted_count = 0
         total_size = 0
         errors = 0
+        targets = [self._results[i] for i in sorted(indices) if i < len(self._results)]
 
-        # 对于目录类型的扫描项（基础清理、系统清理、微信/QQ缓存），清空目录内容
-        # 回收站是特殊项：必须走 Windows 官方接口，直接删目录会破坏其结构
-        if self._scan_type_key in DIR_CLEAN_TYPES:
-            for path in paths:
+        if self._scan_type_key == "temp_files":
+            # 临时文件后缀扫描：每条结果的 extra 是文件清单，批量删
+            for item in targets:
+                file_list = item.extra or []
+                done = await asyncio.to_thread(cleaner.delete_files, file_list)
+                ok = sum(1 for r in done if r.success)
+                if ok:
+                    deleted_count += 1
+                    total_size += sum(r.size for r in done if r.success)
+                else:
+                    errors += 1
+                self._status_text.value = f"正在清理临时文件... ({deleted_count}/{len(targets)})"
+                try:
+                    self.update()
+                except Exception:
+                    pass
+        elif self._scan_type_key in DIR_CLEAN_TYPES:
+            # 目录类：逐项分派（回收站走官方接口 / 通配符 / 普通目录）
+            for item in targets:
+                path = item.path
                 if os.path.basename(os.path.normpath(path)).lower() == "$recycle.bin":
                     drive = os.path.splitdrive(path)[0] + "\\"
                     result = empty_recycle_bin(drive)
@@ -637,22 +654,17 @@ class ScanPanel(ft.Container):
                     total_size += result.size
                 else:
                     errors += 1
-
-                # 更新进度
-                idx = indices.pop() if indices else -1
-                if idx >= 0:
-                    self._selected_indices.discard(idx)
-
-                self._status_text.value = f"正在清理... ({deleted_count}/{len(paths)})"
+                self._status_text.value = f"正在清理... ({deleted_count}/{len(targets)})"
                 try:
                     self.update()
                 except Exception:
                     pass
                 await asyncio.sleep(0.05)
         else:
-            # 文件类型直接删除
-            results = await asyncio.to_thread(cleaner.delete_files, paths)
-            for r in results:
+            # 文件类（大文件查找、重复文件等）：直接删文件
+            file_paths = [item.path for item in targets]
+            done = await asyncio.to_thread(cleaner.delete_files, file_paths)
+            for r in done:
                 if r.success:
                     deleted_count += 1
                     total_size += r.size

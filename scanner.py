@@ -16,6 +16,7 @@ class ScanResult:
     size: int           # 字节数
     category: str       # 分类标签
     is_file: bool = True
+    extra: object = None  # 附加数据（如临时文件清单 list[str]）
 
     @property
     def size_display(self) -> str:
@@ -99,6 +100,11 @@ SCAN_TYPES = {
         scan_type="deep_clean",
         title="深度清理",
         description="扫描浏览器、开发工具、常用软件缓存及系统日志等（仅缓存类，不碰用户数据）"
+    ),
+    "temp_files": ScanTask(
+        scan_type="temp_files",
+        title="临时文件扫描",
+        description="按后缀扫描散落的临时文件（.tmp/.bak/.dmp等），排除游戏与依赖缓存"
     ),
 }
 
@@ -415,6 +421,73 @@ class DiskScanner:
         self._results = results
         self._total_size = sum(r.size for r in results)
         self._report_progress("深度清理扫描完成", len(results), len(results))
+        return results
+
+    def scan_temp_files(self) -> list[ScanResult]:
+        """按后缀名扫描散落的临时文件（参考公开的后缀事实清单）。
+
+        只扫明确的临时目录，排除游戏/依赖缓存目录，避免误删。
+        """
+        self._cancelled = False
+        results = []
+        try:
+            from temp_rules import TEMP_SUFFIXES, SCAN_ROOTS, EXCLUDE_PATH_PARTS, VARS
+        except ImportError:
+            self._report_progress("临时文件规则缺失", 0, 0)
+            return results
+
+        # 聚合：按后缀分组统计（去重，避免扫描根重叠导致重复统计）
+        by_suffix: dict[str, list] = {}
+        seen_files: set[str] = set()
+        roots = []
+        for tpl in SCAN_ROOTS:
+            p = tpl
+            for k, v in VARS.items():
+                p = p.replace("{" + k + "}", v)
+            roots.append(os.path.normpath(p))
+
+        for root in roots:
+            if not os.path.isdir(root):
+                continue
+            for dirpath, dirnames, filenames in os.walk(root):
+                if self._cancelled:
+                    break
+                low = dirpath.lower()
+                if any(part in low for part in EXCLUDE_PATH_PARTS):
+                    dirnames[:] = []
+                    continue
+                for fn in filenames:
+                    lowfn = fn.lower()
+                    for suf in TEMP_SUFFIXES:
+                        if lowfn.endswith(suf):
+                            fp = os.path.join(dirpath, fn)
+                            key_norm = os.path.normcase(os.path.normpath(fp))
+                            if key_norm in seen_files:
+                                break
+                            try:
+                                sz = os.path.getsize(fp)
+                            except (OSError, PermissionError):
+                                break
+                            seen_files.add(key_norm)
+                            key = suf if suf.startswith(".") else ("." + suf)
+                            by_suffix.setdefault(key, []).append((fp, sz))
+                            break
+
+        for suf, items in sorted(by_suffix.items(), key=lambda x: -sum(s for _, s in x[1])):
+            total = sum(s for _, s in items)
+            if total > 0:
+                results.append(ScanResult(
+                    name=f"临时文件 {suf}（{len(items)} 个）",
+                    path="",  # 无单一路径，文件清单在 extra 中
+                    size=total,
+                    category="临时文件",
+                    is_file=False,
+                    extra=[p for p, _ in items],
+                ))
+
+        self._results = results
+        self._total_size = sum(r.size for r in results)
+        self._report_progress("临时文件扫描完成", len(results), len(results))
         return results
 
     # ── 微信清理 ──────────────────────────────────────────

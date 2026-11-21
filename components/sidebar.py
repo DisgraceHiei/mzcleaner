@@ -21,6 +21,7 @@ class Sidebar(ft.Container):
         {"icon": ft.Icons.LOOP_OUTLINED, "text": "相似文件查找"},
         {"icon": ft.Icons.FOLDER_OUTLINED, "text": "目录大小查看"},
         {"icon": ft.Icons.CLEANING_SERVICES, "text": "深度清理"},
+        {"icon": ft.Icons.DESCRIPTION_OUTLINED, "text": "临时文件扫描"},
     ]
 
     def __init__(self, on_menu_change=None):
