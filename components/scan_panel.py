@@ -378,13 +378,7 @@ class ScanPanel(ft.Container):
         self._status_text.value = message
         if total > 0:
             self._progress_bar.value = current / total
-        # 使用 page 的 run_task 确保在主线程更新
-        try:
-            self.page.run_task(
-                asyncio.sleep(0.01)
-            )
-        except Exception:
-            pass
+        # 进度值已直接写入控件；最终状态由 _finalize_scan 在主线程统一刷新
 
     async def _finalize_scan(self):
         """扫描完成后更新UI（在主线程调用）"""
@@ -543,7 +537,7 @@ class ScanPanel(ft.Container):
             self._show_confirm_dialog(
                 "确认清理",
                 "没有选中任何项目。您确定要清理所有扫描到的文件吗？",
-                lambda: asyncio.ensure_future(self._do_clean_all())
+                self._do_clean_all
             )
             return
 
@@ -552,20 +546,26 @@ class ScanPanel(ft.Container):
         self._show_confirm_dialog(
             "确认清理",
             msg,
-            lambda: asyncio.ensure_future(self._do_clean_selected())
+            self._do_clean_selected
         )
 
     def _show_confirm_dialog(self, title: str, message: str, on_confirm):
-        """显示确认对话框"""
+        """显示确认对话框
 
-        def close_dlg(e):
+        on_confirm 为 async 协程函数。确认按钮必须用 async 回调，
+        这样 Flet 才会通过 run_task 在事件循环中 await 它；
+        若用同步回调，Flet 会在线程池执行，导致 asyncio.ensure_future
+        因无事件循环而抛错、清理任务无法启动。
+        """
+
+        async def close_dlg(e):
             dlg.open = False
             self.page.update()
 
-        def confirm(e):
+        async def confirm(e):
             dlg.open = False
             self.page.update()
-            on_confirm()
+            await on_confirm()
 
         dlg = ft.AlertDialog(
             modal=True,
