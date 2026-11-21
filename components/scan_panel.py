@@ -79,61 +79,46 @@ class ScanPanel(ft.Container):
         self._stats_row = ft.Row(controls=[], spacing=16, visible=False)
 
         # ── 按钮 ──
-        self._btn_scan = ft.OutlinedButton(
+        self._btn_scan = ft.ElevatedButton(
             content=ft.Row(
                 controls=[
-                    ft.Icon(name=ft.Icons.SEARCH, size=18),
-                    ft.Text("开始扫描", size=14),
+                    ft.Icon(name=ft.Icons.SEARCH, size=17),
+                    ft.Text("开始扫描", size=13, weight=ft.FontWeight.W_600),
                 ],
                 spacing=6,
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
-            style=ft.ButtonStyle(
-                side=ft.BorderSide(1.5, COLORS["primary"]),
-                shape=ft.RoundedRectangleBorder(radius=20),
-                color=COLORS["primary"],
-                bgcolor=COLORS["card"],
-            ),
-            height=40,
+            style=self._btn_style_active(),
+            height=42,
             on_click=self._on_scan_click,
         )
 
-        self._btn_pause = ft.OutlinedButton(
+        self._btn_pause = ft.ElevatedButton(
             content=ft.Row(
                 controls=[
-                    ft.Icon(name=ft.Icons.PAUSE, size=18),
-                    ft.Text("暂停扫描", size=14),
+                    ft.Icon(name=ft.Icons.PAUSE, size=17),
+                    ft.Text("暂停", size=13, weight=ft.FontWeight.W_600),
                 ],
                 spacing=6,
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
-            style=ft.ButtonStyle(
-                side=ft.BorderSide(1.5, COLORS["disabled"]),
-                shape=ft.RoundedRectangleBorder(radius=20),
-                color=COLORS["disabled"],
-                bgcolor=COLORS["button_disabled_bg"],
-            ),
-            height=40,
+            style=self._btn_style_disabled(),
+            height=42,
             disabled=True,
             on_click=self._on_pause_click,
         )
 
-        self._btn_clean = ft.OutlinedButton(
+        self._btn_clean = ft.ElevatedButton(
             content=ft.Row(
                 controls=[
-                    ft.Icon(name=ft.Icons.DELETE_OUTLINE, size=18),
-                    ft.Text("开始清理", size=14),
+                    ft.Icon(name=ft.Icons.DELETE_OUTLINE, size=17),
+                    ft.Text("开始清理", size=13, weight=ft.FontWeight.W_600),
                 ],
                 spacing=6,
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
-            style=ft.ButtonStyle(
-                side=ft.BorderSide(1.5, COLORS["disabled"]),
-                shape=ft.RoundedRectangleBorder(radius=20),
-                color=COLORS["disabled"],
-                bgcolor=COLORS["button_disabled_bg"],
-            ),
-            height=40,
+            style=self._btn_style_disabled(),
+            height=42,
             disabled=True,
             on_click=self._on_clean_click,
         )
@@ -233,22 +218,22 @@ class ScanPanel(ft.Container):
         card = ft.Container(
             content=card_content,
             bgcolor=COLORS["card"],
-            border_radius=15,
-            padding=ft.padding.all(24),
+            border_radius=14,
+            padding=ft.padding.all(28),
             border=ft.border.all(1, COLORS["border"]),
             expand=True,
             shadow=ft.BoxShadow(
-                spread_radius=0.5,
-                blur_radius=8,
-                color=ft.Colors.with_opacity(0.06, "#000000"),
-                offset=ft.Offset(0, 2),
+                spread_radius=0,
+                blur_radius=20,
+                color=ft.Colors.with_opacity(0.04, "#4F46E5"),
+                offset=ft.Offset(0, 4),
             ),
         )
 
         super().__init__(
             content=card,
             bgcolor=COLORS["background"],
-            padding=ft.padding.all(20),
+            padding=ft.padding.all(24),
             expand=True,
         )
 
@@ -501,37 +486,51 @@ class ScanPanel(ft.Container):
             weight=ft.FontWeight.W_600,
         )
 
+        icon_badge = ft.Container(
+            content=ft.Icon(name=icon_name, size=16, color=COLORS["primary"]),
+            width=34,
+            height=34,
+            border_radius=17,
+            bgcolor=COLORS["primary_soft"],
+            alignment=ft.alignment.center,
+        )
+
         category_badge = ft.Container(
             content=ft.Text(
                 value=result.category,
                 size=10,
                 color=COLORS["primary"],
+                weight=ft.FontWeight.W_600,
             ),
-            bgcolor=COLORS["sidebar_selected_bg"],
-            border_radius=10,
-            padding=ft.padding.only(left=8, right=8, top=2, bottom=2),
+            bgcolor=COLORS["primary_soft"],
+            border_radius=12,
+            padding=ft.padding.symmetric(horizontal=8, vertical=2),
         )
 
         return ft.Container(
             content=ft.Row(
                 controls=[
                     checkbox,
-                    ft.Icon(name=icon_name, size=18, color=COLORS["secondary"]),
+                    icon_badge,
                     ft.Column(
                         controls=[name_text, path_text],
-                        spacing=2,
+                        spacing=3,
                         expand=True,
                     ),
                     category_badge,
+                    ft.Container(width=8),
                     size_text,
                 ],
-                spacing=10,
+                spacing=12,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.padding.only(left=8, right=12, top=8, bottom=8),
-            border_radius=8,
-            bgcolor=COLORS["sidebar_selected_bg"] if is_checked else COLORS["card"],
+            padding=ft.padding.only(left=10, right=14, top=10, bottom=10),
+            border_radius=12,
+            border=ft.border.all(1, COLORS["border"]),
+            bgcolor=COLORS["primary_soft"] if is_checked else COLORS["card"],
+            margin=ft.margin.only(bottom=4),
             on_click=lambda e, i=index: self._on_row_click(i),
+            animate=ft.Animation(150, ft.AnimationCurve.EASE),
         )
 
     # ── 清理逻辑 ──────────────────────────────────────────
@@ -775,26 +774,29 @@ class ScanPanel(ft.Container):
     @staticmethod
     def _btn_style_active():
         return ft.ButtonStyle(
-            side=ft.BorderSide(1.5, COLORS["primary"]),
-            shape=ft.RoundedRectangleBorder(radius=20),
-            color=COLORS["primary"],
-            bgcolor=COLORS["card"],
+            shape=ft.RoundedRectangleBorder(radius=10),
+            color="#FFFFFF",
+            bgcolor=COLORS["primary"],
+            elevation=2,
+            padding=ft.padding.symmetric(horizontal=18, vertical=8),
         )
 
     @staticmethod
     def _btn_style_disabled():
         return ft.ButtonStyle(
-            side=ft.BorderSide(1.5, COLORS["disabled"]),
-            shape=ft.RoundedRectangleBorder(radius=20),
-            color=COLORS["disabled"],
+            shape=ft.RoundedRectangleBorder(radius=10),
+            color=COLORS["button_disabled_text"],
             bgcolor=COLORS["button_disabled_bg"],
+            elevation=0,
+            padding=ft.padding.symmetric(horizontal=18, vertical=8),
         )
 
     @staticmethod
     def _btn_style_scanning():
         return ft.ButtonStyle(
-            side=ft.BorderSide(1.5, COLORS["primary"]),
-            shape=ft.RoundedRectangleBorder(radius=20),
+            shape=ft.RoundedRectangleBorder(radius=10),
             color=COLORS["primary"],
-            bgcolor="#E8F5F2",
+            bgcolor=COLORS["primary_soft"],
+            elevation=0,
+            padding=ft.padding.symmetric(horizontal=18, vertical=8),
         )

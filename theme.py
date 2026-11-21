@@ -1,23 +1,38 @@
-"""C盘清理工具 - 主题颜色常量"""
+"""主题颜色常量 - 现代双栏风格"""
 
+# 深色侧栏 + 浅色内容区，靛蓝主色
 COLORS = {
-    "background": "#F5F9F8",
+    # 全局
+    "background": "#F7F8FC",
     "card": "#FFFFFF",
-    "primary": "#00897B",
-    "text": "#333333",
-    "secondary": "#666666",
-    "border": "#DDDDDD",
-    "disabled": "#CCCCCC",
-    "sidebar_bg": "#FFFFFF",
-    "sidebar_selected_bg": "#E8F5F2",
-    "sidebar_text": "#666666",
-    "sidebar_selected_text": "#00897B",
+    "primary": "#4F46E5",
+    "primary_soft": "#EEF0FF",
+    "text": "#1E2433",
+    "secondary": "#6B7280",
+    "border": "#E5E7EB",
+    "disabled": "#C7CBD5",
+
+    # 侧边栏（深色）
+    "sidebar_bg": "#1E2439",
+    "sidebar_selected_bg": "#312E81",
+    "sidebar_text": "#A8AEC4",
+    "sidebar_selected_text": "#FFFFFF",
+
+    # 顶部栏
     "header_bg": "#FFFFFF",
-    "header_text": "#666666",
-    "link_red": "#FF5555",
-    "link_green": "#00897B",
-    "scan_bg": "#F5F9F8",
-    "button_green": "#00897B",
-    "button_disabled_bg": "#E0E0E0",
-    "button_disabled_text": "#AAAAAA",
+    "header_text": "#6B7280",
+
+    # 按钮
+    "button_bg": "#4F46E5",
+    "button_disabled_bg": "#EDEEF3",
+    "button_disabled_text": "#A8AEC4",
+
+    # 状态色
+    "success": "#059669",
+    "link_red": "#DC2626",
+    "link_green": "#059669",
+
+    # 概览卡片
+    "stat_bg": "#FFFFFF",
+    "scan_bg": "#F7F8FC",
 }
