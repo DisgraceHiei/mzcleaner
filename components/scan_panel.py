@@ -47,9 +47,8 @@ class ScanPanel(ft.Container):
         # ── 描述文字 ──
         self._desc_text = ft.Text(
             value=self._scan_task.description,
-            size=13,
+            size=12,
             color=COLORS["secondary"],
-            italic=True,
         )
 
         # ── 状态提示 ──
