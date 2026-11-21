@@ -48,7 +48,7 @@ class Sidebar(ft.Container):
                                     color=COLORS["primary"],
                                 ),
                                 ft.Text(
-                                    value="磨针C盘清理",
+                                    value="C盘清理",
                                     size=16,
                                     color=COLORS["primary"],
                                     weight=ft.FontWeight.W_600,

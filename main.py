@@ -1,6 +1,6 @@
-"""磨针C盘清理 - Windows桌面清理工具
+"""C盘清理工具 - Windows 桌面清理工具
 
-使用 Flet 0.28.x 构建的现代 Windows 11 风格桌面应用。
+基于 MIT 开源源码构建的免费版本。
 支持基础清理、系统清理、微信/QQ清理、软件占用查询、大文件/重复文件查找等。
 """
 
@@ -15,7 +15,7 @@ def main(page: ft.Page):
     """应用主入口"""
 
     # 窗口配置
-    page.title = "磨针C盘清理(磨针工具软件 - https://tools.nwumba.cn)"
+    page.title = "C盘清理 · 免费开源版"
     page.window.width = 1280
     page.window.height = 720
     page.window.min_width = 960
