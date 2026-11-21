@@ -1,11 +1,12 @@
 """主内容区域 - 扫描面板组件（支持所有扫描类型）"""
 
 import asyncio
+import os
 import threading
 import flet as ft
 from theme import COLORS
 from scanner import DiskScanner, SCAN_TYPES, ScanResult, ScanTask
-from cleaner import FileCleaner
+from cleaner import FileCleaner, empty_recycle_bin
 
 
 # 扫描类型 → 菜单索引的映射
@@ -617,9 +618,14 @@ class ScanPanel(ft.Container):
         errors = 0
 
         # 对于目录类型的扫描项（基础清理、系统清理、微信/QQ缓存），清空目录内容
+        # 回收站是特殊项：必须走 Windows 官方接口，直接删目录会破坏其结构
         if self._scan_type_key in DIR_CLEAN_TYPES:
             for path in paths:
-                result = cleaner.clean_directory_contents(path)
+                if os.path.basename(os.path.normpath(path)).lower() == "$recycle.bin":
+                    drive = os.path.splitdrive(path)[0] + "\\"
+                    result = empty_recycle_bin(drive)
+                else:
+                    result = cleaner.clean_directory_contents(path)
                 if result.success:
                     deleted_count += 1
                     total_size += result.size
