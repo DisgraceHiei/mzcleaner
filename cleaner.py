@@ -1,6 +1,7 @@
 """清理操作模块 - 执行文件删除、目录清理等操作"""
 
 import os
+import glob
 import shutil
 import stat
 import ctypes
@@ -91,6 +92,22 @@ class FileCleaner:
                 results.append(CleanResult(success=False, path=path, size=0, error=str(ex)))
 
         return results
+
+    def clean_glob_files(self, pattern: str) -> CleanResult:
+        """删除匹配通配符的文件（如 thumbcache_*.db）"""
+        total_size = 0
+        count = 0
+        for p in glob.glob(pattern):
+            if self._cancelled:
+                break
+            try:
+                if os.path.isfile(p):
+                    total_size += os.path.getsize(p)
+                    os.remove(p)
+                    count += 1
+            except Exception:
+                continue
+        return CleanResult(success=True, path=pattern, size=total_size)
 
     def clean_directory_contents(self, dir_path: str) -> CleanResult:
         """清空目录内容（保留目录本身）"""

@@ -1,6 +1,7 @@
 """主内容区域 - 扫描面板组件（支持所有扫描类型）"""
 
 import asyncio
+import glob
 import os
 import threading
 import flet as ft
@@ -14,10 +15,11 @@ SCAN_TYPE_KEYS = [
     "basic_clean", "system_clean", "wechat_clean", "qq_clean",
     "user_dir_migrate", "software_usage", "software_move",
     "large_files", "duplicate_files", "similar_files", "dir_size_view",
+    "deep_clean",
 ]
 
-# 需要确认清理的扫描类型（目录清理用 clean_directory_contents）
-DIR_CLEAN_TYPES = {"basic_clean", "system_clean", "wechat_clean", "qq_clean"}
+# 走「清空目录内容」清理方式的扫描类型
+DIR_CLEAN_TYPES = {"basic_clean", "system_clean", "wechat_clean", "qq_clean", "deep_clean"}
 
 
 class ScanPanel(ft.Container):
@@ -369,6 +371,8 @@ class ScanPanel(ft.Container):
                 self._results = self._scanner.scan_similar_files()
             elif scan_type == "dir_size_view":
                 self._results = self._scanner.scan_dir_sizes()
+            elif scan_type == "deep_clean":
+                self._results = self._scanner.scan_deep_clean()
         except Exception as ex:
             self._results = []
             self._status_text.value = f"扫描出错: {ex}"
@@ -624,6 +628,8 @@ class ScanPanel(ft.Container):
                 if os.path.basename(os.path.normpath(path)).lower() == "$recycle.bin":
                     drive = os.path.splitdrive(path)[0] + "\\"
                     result = empty_recycle_bin(drive)
+                elif glob.has_magic(path):
+                    result = cleaner.clean_glob_files(path)
                 else:
                     result = cleaner.clean_directory_contents(path)
                 if result.success:

@@ -20,6 +20,7 @@ class Sidebar(ft.Container):
         {"icon": ft.Icons.CONTENT_COPY_OUTLINED, "text": "重复文件查找"},
         {"icon": ft.Icons.LOOP_OUTLINED, "text": "相似文件查找"},
         {"icon": ft.Icons.FOLDER_OUTLINED, "text": "目录大小查看"},
+        {"icon": ft.Icons.CLEANING_SERVICES, "text": "深度清理"},
     ]
 
     def __init__(self, on_menu_change=None):

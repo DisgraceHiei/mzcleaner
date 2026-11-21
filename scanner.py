@@ -1,6 +1,7 @@
 """核心扫描引擎 - 支持多种C盘清理扫描类型"""
 
 import os
+import glob
 import hashlib
 import threading
 from pathlib import Path
@@ -93,6 +94,11 @@ SCAN_TYPES = {
         scan_type="dir_size_view",
         title="目录大小查看",
         description="计算指定目录下各子目录的大小分布情况"
+    ),
+    "deep_clean": ScanTask(
+        scan_type="deep_clean",
+        title="深度清理",
+        description="扫描浏览器、开发工具、常用软件缓存及系统日志等（仅缓存类，不碰用户数据）"
     ),
 }
 
@@ -356,6 +362,59 @@ class DiskScanner:
         self._results = results
         self._total_size = sum(r.size for r in results)
         self._report_progress("系统清理扫描完成", len(results), len(results))
+        return results
+
+    # ── 深度清理（数据驱动规则）──────────────────────────────
+
+    def scan_deep_clean(self) -> list[ScanResult]:
+        """按深度规则扫描缓存/日志/临时目录。
+
+        规则定义在 clean_rules.py，只含公认可安全清理的缓存类路径。
+        """
+        self._cancelled = False
+        results = []
+        try:
+            from clean_rules import DEEP_CLEAN_RULES, expand_rule_path
+        except ImportError:
+            self._report_progress("规则文件缺失", 0, 0)
+            return results
+
+        total = len(DEEP_CLEAN_RULES)
+        for i, (name, category, template) in enumerate(DEEP_CLEAN_RULES):
+            if self._cancelled:
+                break
+            path = expand_rule_path(template)
+            if not path:
+                continue
+
+            # 通配符文件模式（如 thumbcache_*.db）
+            if glob.has_magic(path):
+                matched = glob.glob(path)
+                file_size = sum(os.path.getsize(p) for p in matched if os.path.isfile(p))
+                if file_size > 0:
+                    results.append(ScanResult(
+                        name=name, path=path, size=file_size,
+                        category=category, is_file=False,
+                    ))
+                self._report_progress(f"深度扫描 {i + 1}/{total}", i + 1, total)
+                continue
+
+            if not os.path.isdir(path):
+                continue
+            size = self._get_dir_size(path)
+            if size > 0:
+                results.append(ScanResult(
+                    name=name,
+                    path=path,
+                    size=size,
+                    category=category,
+                    is_file=False,
+                ))
+            self._report_progress(f"深度扫描 {i + 1}/{total}", i + 1, total)
+
+        self._results = results
+        self._total_size = sum(r.size for r in results)
+        self._report_progress("深度清理扫描完成", len(results), len(results))
         return results
 
     # ── 微信清理 ──────────────────────────────────────────
