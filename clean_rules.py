@@ -69,6 +69,22 @@ DEEP_CLEAN_RULES = [
     ("VS Code CachedData", "开发缓存", "{APPDATA}\\Code\\CachedData"),
     ("JetBrains 缓存", "开发缓存", "{LOCALAPPDATA}\\JetBrains"),
 
+    # ── 显卡/系统着色器缓存（自动重建，安全）────────────────
+    ("NVIDIA 着色器缓存", "显卡缓存", "{LOCALAPPDATA}\\NVIDIA\\DXCache"),
+    ("NVIDIA 着色器缓存(旧版)", "显卡缓存", "{LOCALAPPDATA}\\NVIDIA\\GLCache"),
+    ("NVIDIA 下载缓存", "显卡缓存", "{LOCALAPPDATA}\\NVIDIA\\Download"),
+    ("DirectX 着色器缓存", "显卡缓存", "{LOCALAPPDATA}\\D3DSCache"),
+
+    # ── 影音/创作软件缓存 ──────────────────────────────────
+    ("剪映缓存", "应用缓存", "{LOCALAPPDATA}\\JianyingPro\\User Data\\Cache"),
+    ("剪映新版本缓存", "应用缓存", "{LOCALAPPDATA}\\JianyingPro\\Cache"),
+    ("网易云音乐缓存", "应用缓存", "{LOCALAPPDATA}\\NetEase\\CloudMusic\\Cache"),
+    ("网易云音乐数据缓存", "应用缓存", "{LOCALAPPDATA}\\NetEase\\CloudMusic\\Data\\Cache"),
+
+    # ── 浏览器缓存补充 ────────────────────────────────────
+    ("夸克浏览器缓存", "浏览器缓存", "{LOCALAPPDATA}\\Quark\\User Data\\Cache"),
+    ("夸克浏览器代码缓存", "浏览器缓存", "{LOCALAPPDATA}\\Quark\\User Data\\Code Cache"),
+
     # ── 常用应用缓存 ────────────────────────────────────────
     ("Office 缓存", "应用缓存", "{LOCALAPPDATA}\\Microsoft\\Office\\16.0\\OfficeFileCache"),
     ("Discord 缓存", "应用缓存", "{APPDATA}\\discord\\Cache"),
